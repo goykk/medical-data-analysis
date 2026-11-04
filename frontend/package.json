@@ -1,0 +1,17 @@
+{
+  "name": "medical-data-analysis-frontend",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Medical Data Analysis Platform - 前端（Express 托管静态页面 + 原生 JS + ECharts）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.0"
+  }
+}

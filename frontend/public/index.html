@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Medical Data Analysis Platform</title>
+<link rel="stylesheet" href="css/style.css" />
+<script src="/config.js"></script>
+<script src="vendor/echarts.min.js"></script>
+</head>
+<body>
+
+<!-- 图标集：统一 24×24 线性描边，由 .nav-ico 等类控制尺寸与颜色 -->
+<svg class="icon-sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-upload" viewBox="0 0 24 24">
+    <path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24">
+    <path d="M5 12.5l4.5 4.5L19 7.5"/>
+  </symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24">
+    <path d="M4 5h16l-6.2 7.2V19l-3.6 1.6v-8.4z"/>
+  </symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24">
+    <path d="M4 7h6M14 7h6M4 12h10M18 12h2M4 17h3M11 17h9"/>
+    <circle cx="12" cy="7" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="9" cy="17" r="2"/>
+  </symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24">
+    <rect x="6" y="6" width="12" height="12" rx="2"/>
+    <rect x="9.5" y="9.5" width="5" height="5" rx="1"/>
+    <path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3"/>
+  </symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24">
+    <path d="M4 20V4"/><path d="M4 20h16"/>
+    <rect x="7" y="12" width="3" height="5"/><rect x="12" y="8" width="3" height="9"/><rect x="17" y="5" width="3" height="12"/>
+  </symbol>
+  <symbol id="i-target" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/>
+  </symbol>
+  <symbol id="i-report" viewBox="0 0 24 24">
+    <path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/>
+  </symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/>
+  </symbol>
+</svg>
+
+<div class="app-root">
+
+  <div class="layout">
+    <!-- ================= 左侧导航 200px ================= -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">MD</div>
+        <div class="brand-name">Medical Data Analysis Platform</div>
+      </div>
+      <nav class="nav" id="nav">
+        <div class="nav-gp">分析流程</div>
+        <a class="nav-item active" data-page="upload"><svg class="nav-ico"><use href="#i-upload"/></svg><span>数据上传</span><i class="tick">✓</i></a>
+        <a class="nav-item" data-page="confirm"><svg class="nav-ico"><use href="#i-check"/></svg><span>数据确认</span><i class="tick">✓</i></a>
+        <a class="nav-item" data-page="cleaning"><svg class="nav-ico"><use href="#i-filter"/></svg><span>数据清洗</span><i class="tick">✓</i></a>
+        <a class="nav-item" data-page="config"><svg class="nav-ico"><use href="#i-sliders"/></svg><span>分析配置</span><i class="tick">✓</i></a>
+        <div class="nav-gp">可选建模</div>
+        <a class="nav-item" data-page="automl"><svg class="nav-ico"><use href="#i-cpu"/></svg><span>智能建模</span><i class="tick">✓</i></a>
+        <div class="nav-gp">结果与输出</div>
+        <a class="nav-item" data-page="dashboard"><svg class="nav-ico"><use href="#i-chart"/></svg><span>分析看板</span><i class="tick">✓</i></a>
+        <a class="nav-item" data-page="prediction"><svg class="nav-ico"><use href="#i-target"/></svg><span>新样本预测</span><i class="tick">✓</i></a>
+        <a class="nav-item" data-page="report"><svg class="nav-ico"><use href="#i-report"/></svg><span>报告中心</span><i class="tick">✓</i></a>
+        <div class="nav-gp">系统</div>
+        <a class="nav-item" data-page="settings"><svg class="nav-ico"><use href="#i-settings"/></svg><span>设置</span><i class="tick">✓</i></a>
+      </nav>
+
+      <!-- 侧栏上下文区：当前数据集 / 字段概览 / 最近运行（js/sidebar.js 渲染，只读） -->
+      <div class="side-body" id="sideBody">
+        <section class="side-sec">
+          <div class="side-hd">当前数据集</div>
+          <div class="ds-name none" id="dsName">尚未载入</div>
+          <div class="ds-meta" id="dsMeta">拖入 CSV / Excel / SAV / DTA，或载入内置示例</div>
+          <div class="ds-tags" id="dsTags"></div>
+        </section>
+        <section class="side-sec">
+          <div class="side-hd"><span id="fieldTitle">字段</span><span class="mono" id="fieldCount"></span></div>
+          <div class="field-list" id="fieldList"><span class="side-empty">载入后显示字段与缺失率</span></div>
+        </section>
+        <section class="side-sec">
+          <div class="side-hd">运行记录<span class="mono" id="runsCount"></span></div>
+          <div class="runs-bd" id="runsBody"><span class="side-empty">读取中…</span></div>
+        </section>
+      </div>
+
+      <!-- 流程引导条：七步进度与「下一步」，状态与导航✓同源（js/flow-guide.js 只渲染不持状态） -->
+      <div class="flow-guide" id="flowGuide" aria-label="分析流程进度">
+        <div class="fg-row">
+          <div class="fg-ticks" id="fgTicks"></div>
+          <span class="fg-count mono" id="fgCount">0/7</span>
+        </div>
+        <button class="btn primary fg-go" id="fgGo" type="button" data-target="upload">前往数据上传 →</button>
+      </div>
+
+      <!-- 全局链路状态区：三盏常驻状态灯（数据由 js/link-status.js 单例统一提供） -->
+      <div class="link-status">
+        <button type="button" class="ls-row" id="lsBackend">
+          <i class="ls-dot" id="lsBackendDot"></i><span class="ls-text" id="lsBackendText">检测中</span>
+        </button>
+        <button type="button" class="ls-row" id="lsModel">
+          <i class="ls-dot" id="lsModelDot"></i><span class="ls-text" id="lsModelText">未建模</span>
+        </button>
+        <button type="button" class="ls-row" id="lsAi">
+          <i class="ls-dot" id="lsAiDot"></i><span class="ls-text" id="lsAiText">检测中</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ================= 右侧主区 ================= -->
+    <div class="main">
+      <header class="topbar">
+        <div class="ds-bar" id="dsBar">
+          <span class="none">未加载数据集</span>
+        </div>
+        <!-- AI 状态已移到侧栏底部链路状态区，此处不再重复展示 -->
+        <div class="topbar-right">
+          <button class="tb-link" id="gotoSettings"><svg class="nav-ico"><use href="#i-settings"/></svg>设置</button>
+        </div>
+      </header>
+
+      <div class="content" id="content">
+        <div id="cloudBanner"></div>
+
+        <!-- 1 数据上传 -->
+        <section class="page active" id="page-upload">
+          <div class="page-head">
+            <h1>数据上传</h1>
+            <p class="page-desc">支持 CSV、Excel、SPSS、Stata，自动识别编码。</p>
+          </div>
+
+          <div class="dz-bar" id="dropzone">
+            <svg class="dz-ico"><use href="#i-upload"/></svg>
+            <div>
+              <div class="dz-main">拖入文件或点击<span class="link">选择</span></div>
+              <div class="dz-sub" id="dzHint">CSV / XLSX / SAV / DTA 等 9 种格式 · 单个文件 ≤50MB</div>
+            </div>
+            <input type="file" id="fileInput" hidden />
+          </div>
+          <div class="progress" id="progress" hidden><div class="progress-bar" id="progressBar"></div></div>
+
+          <div class="gt">最近文件<span class="gt-note" id="fileCount"></span></div>
+          <div class="table-wrap"><table class="grid" id="recentTable"></table></div>
+
+          <div class="gt">解析结果<span class="gt-note">当前数据集</span></div>
+          <div id="metaBox"></div>
+        </section>
+
+        <!-- 2 数据确认 -->
+        <section class="page" id="page-confirm">
+          <div class="page-head">
+            <h1>数据确认</h1>
+            <p class="page-desc">核对字段类型；ID 列与常量列已自动排除。</p>
+          </div>
+          <div id="confirmAlert"></div>
+          <div class="gt">字段清单<span class="gt-note" id="varCount"></span></div>
+          <div class="table-wrap scroll-y"><table class="grid" id="varTable"></table></div>
+          <div class="form-actions">
+            <button class="btn primary" id="confirmBtn">确认并进入清洗</button>
+          </div>
+        </section>
+
+        <!-- 3 数据清洗 -->
+        <section class="page" id="page-cleaning">
+          <div class="page-head">
+            <h1>数据清洗</h1>
+            <p class="page-desc">缺失值按成对删除，每项分析单独报告纳入样本量。</p>
+          </div>
+          <div id="cleaningBody"><div class="empty">请先完成数据确认</div></div>
+        </section>
+
+        <!-- 4 分析配置 -->
+        <section class="page" id="page-config">
+          <div class="page-head">
+            <h1>分析配置</h1>
+            <p class="page-desc">指定结局变量、目标自变量与待校正协变量。</p>
+          </div>
+          <div id="configBody"><div class="empty">请先完成数据清洗</div></div>
+        </section>
+
+        <!-- 4.5 智能建模 -->
+        <section class="page" id="page-automl">
+          <div class="page-head">
+            <h1>智能建模</h1>
+            <p class="page-desc">自动选最优模型，或手动指定模型训练。</p>
+          </div>
+          <div id="automlBody"><div class="empty">请先上传并确认数据集</div></div>
+        </section>
+
+        <!-- 5 分析看板 -->
+        <section class="page" id="page-dashboard">
+          <div class="page-head">
+            <h1>分析看板</h1>
+            <p class="page-desc">重要指标、单变量、多因素校正、模型评估与 SHAP。</p>
+          </div>
+          <div id="dashBody"><div class="empty">请先完成分析配置</div></div>
+        </section>
+
+        <!-- 6 新样本预测 -->
+        <section class="page" id="page-prediction">
+          <div class="page-head">
+            <h1>新样本预测</h1>
+            <p class="page-desc">用当前最优模型预测新病例。</p>
+          </div>
+          <div id="predBody"></div>
+        </section>
+
+        <!-- 7 报告中心 -->
+        <section class="page" id="page-report">
+          <div class="page-head">
+            <h1>报告中心</h1>
+            <p class="page-desc">汇总全部分析结果，可导出 PDF。</p>
+          </div>
+          <div class="form-actions right"><button class="btn primary" id="exportPdf">导出 PDF</button></div>
+          <div id="reportBody"></div>
+        </section>
+
+        <!-- 8 设置 -->
+        <section class="page" id="page-settings">
+          <div class="page-head">
+            <h1>设置</h1>
+            <p class="page-desc">密钥仅存服务端内存，重启后失效。</p>
+          </div>
+
+          <div class="gt" id="ai-config">大模型接入</div>
+          <div class="card">
+            <div class="frm">
+              <div class="frm-row">
+                <div class="lb">服务商</div>
+                <div class="ct">
+                  <select id="llmProvider">
+                    <option value="deepseek">DeepSeek</option>
+                    <option value="qwen">通义千问</option>
+                    <option value="glm">智谱 GLM</option>
+                    <option value="modelarts_pangu">华为云 ModelArts Studio（盘古）</option>
+                    <option value="custom">自定义（OpenAI 兼容）</option>
+                  </select>
+                </div>
+              </div>
+              <div class="frm-row">
+                <div class="lb">Base URL</div>
+                <div class="ct"><input type="text" id="llmBaseUrl" placeholder="https://..." /></div>
+              </div>
+              <div class="frm-row">
+                <div class="lb">模型名称</div>
+                <div class="ct"><input type="text" id="llmModel" placeholder="模型标识" /></div>
+              </div>
+              <div class="frm-row">
+                <div class="lb">API Key</div>
+                <div class="ct">
+                  <div class="pwd-wrap" style="flex:1">
+                    <input type="password" id="llmKey" placeholder="留空表示不修改" />
+                    <button class="btn tiny" id="toggleKey" type="button">显示</button>
+                  </div>
+                  <span class="hint" id="keyMask" style="margin:0"></span>
+                </div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn" id="testConn">测试连接</button>
+              <button class="btn primary" id="saveLlm">保存</button>
+            </div>
+            <div class="hint" id="llmHint"></div>
+          </div>
+
+          <div class="gt" id="runtime">运行时</div>
+          <div class="card">
+            <div class="frm">
+              <div class="frm-row">
+                <div class="lb">后端地址</div>
+                <div class="ct"><span class="mono" id="setApiBase">--</span></div>
+              </div>
+              <div class="frm-row">
+                <div class="lb">运行模式</div>
+                <div class="ct"><span id="setMode">--</span></div>
+              </div>
+              <div class="frm-row">
+                <div class="lb">访问令牌</div>
+                <div class="ct">
+                  <div class="pwd-wrap" style="flex:1">
+                    <input type="password" id="apiToken" placeholder="后端启用 API_TOKEN 时必填" />
+                    <button class="btn tiny" id="saveToken" type="button">保存</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="hint">令牌仅保存在本机浏览器 localStorage，随每个请求以 <code>X-API-Token</code> 头发送；
+              后端未启用鉴权时留空即可。</div>
+          </div>
+          <div class="gt">分析默认值<span class="gt-note">后端全局配置 · 只读</span></div>
+          <div class="card">
+            <div class="frm">
+              <div class="frm-row">
+                <div class="lb">显著性水平 α</div>
+                <div class="ct"><span class="mono" id="setAlpha">读取中</span></div>
+              </div>
+              <div class="frm-row">
+                <div class="lb">FDR 校正方法</div>
+                <div class="ct"><span class="mono" id="setFdr">读取中</span></div>
+              </div>
+              <div class="frm-row">
+                <div class="lb">随机种子</div>
+                <div class="ct"><span class="mono" id="setSeed">读取中</span></div>
+              </div>
+            </div>
+            <div class="hint">以上三项由后端 <code>config.py</code> 统一决定并在响应中回传，前端只做呈现，
+              不本地覆盖，以免默认口径与后端计算不一致。</div>
+          </div>
+
+          <div class="gt">数据与存储</div>
+          <div class="card">
+            <div class="frm">
+              <div class="frm-row">
+                <div class="lb">单文件上限</div>
+                <div class="ct"><span class="mono" id="setUpload">读取中</span>
+                  <span class="unit">由后端 MAX_UPLOAD_MB 决定</span></div>
+              </div>
+              <div class="frm-row">
+                <div class="lb">本地最近文件保留</div>
+                <div class="ct">
+                  <select id="keepRecent" class="sel-inline" style="min-width:72px">
+                    <option value="5">5 条</option>
+                    <option value="10">10 条</option>
+                    <option value="20">20 条</option>
+                    <option value="50">50 条</option>
+                  </select>
+                  <span class="unit" id="recentCount"></span>
+                </div>
+              </div>
+              <div class="frm-row">
+                <div class="lb">后端历史记录</div>
+                <div class="ct"><span class="mono" id="histCount">读取中</span>
+                  <span class="unit">条（SQLite / RDS）</span></div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn danger" id="clearRecent">清空本地最近文件记录</button>
+            </div>
+            <div class="hint">清空只影响本机浏览器保存的最近文件列表，不删除后端历史与已上传数据集。</div>
+          </div>
+
+          <div class="gt">关于</div>
+          <div class="card">
+            <div class="frm">
+              <div class="frm-row">
+                <div class="lb">前端版本</div>
+                <div class="ct"><span class="mono" id="aboutFe">--</span></div>
+              </div>
+              <div class="frm-row">
+                <div class="lb">后端版本</div>
+                <div class="ct"><span class="mono" id="aboutBe">读取中</span></div>
+              </div>
+              <div class="frm-row">
+                <div class="lb">开源许可证</div>
+                <div class="ct"><span id="aboutLicense">--</span></div>
+              </div>
+              <div class="frm-row">
+                <div class="lb">开源地址</div>
+                <div class="ct"><span class="mono" id="aboutRepo">读取中</span></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 底部状态栏 24px（全站固定） ================= -->
+  <footer class="statusbar">
+    <div class="sb-state" id="sbState"><i class="dot"></i><span id="sbText">就绪</span></div>
+    <div class="sb-mid">
+      <span class="u">数据集</span><span class="v" id="sbFp">--------</span>
+      <span class="sp">│</span>
+      <span class="v" id="sbDims">-- × --</span>
+    </div>
+    <div class="sb-right">
+      <span class="u">后端</span><span class="v" id="sbVer">--</span>
+      <span class="sp">│</span>
+      <span class="v" id="sbClock">--:--:--</span>
+    </div>
+  </footer>
+</div>
+
+<!-- 医疗校验弹出选择框 -->
+<div class="modal" id="validateModal">
+  <div class="modal-box">
+    <div class="modal-title">医疗数据校验</div>
+    <div class="modal-text" id="validateText"></div>
+    <div class="modal-actions">
+      <button class="btn danger" id="terminateBtn">终止分析</button>
+      <button class="btn primary" id="continueBtn">确认继续</button>
+    </div>
+  </div>
+</div>
+
+<div class="loading" id="loading" hidden><div class="spinner"></div><span class="lb-text">处理中…</span></div>
+<div class="toast-box" id="toastBox"></div>
+
+<script src="js/api.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/link-status.js"></script>
+<script src="js/flow-guide.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/upload.js"></script>
+<script src="js/confirm.js"></script>
+<script src="js/cleaning.js"></script>
+<script src="js/analysis-config.js"></script>
+<script src="js/automl.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/prediction.js"></script>
+<script src="js/report.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/sidebar.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

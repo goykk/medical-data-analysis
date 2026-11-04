@@ -1,0 +1,16 @@
+# 医疗数据分析平台 - 前端镜像（Express 托管静态页）
+FROM node:22-slim
+
+WORKDIR /app
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY frontend/ ./
+
+EXPOSE 3001
+# 该地址被注入到浏览器端（window.APP_CONFIG.apiBase），必须是浏览器可达地址；
+# 本地默认用宿主机映射端口，部署到服务器时改成公网/反代地址。
+ENV PORT=3001 HOST=0.0.0.0 BACKEND_ORIGIN=http://127.0.0.1:8002
+
+CMD ["node", "server.js"]

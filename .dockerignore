@@ -1,0 +1,11 @@
+# 构建上下文瘦身：排除运行时产物与依赖（约 60MB+）
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/*.pyc
+backend/models
+backend/data
+.git
+.gitignore
+*.zip
+启动说明.md

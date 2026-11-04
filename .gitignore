@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.env
+backend/data/
+backend/models/
+backend/catboost_info/
+backend/automl/lexicon/user_lexicon.json
+.pytest_cache/
+node_modules/
+# package-lock.json 建议提交以保证评委环境可复现，此处保留
+
+*.log

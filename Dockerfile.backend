@@ -1,0 +1,28 @@
+# 医疗数据分析平台 - 后端镜像
+# 注意：requirements.txt 里的 scikit-survival 会拉取无 py3.13 wheel 的 ecos，
+# 导致构建失败；这里先把 sksurv 行剔除装其余依赖，再 --no-deps 单独装它。
+FROM python:3.13-slim
+
+WORKDIR /app
+
+# 系统依赖：lightgbm / xgboost 运行时需要 OpenMP（slim 镜像默认没有 libgomp）
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# PyPI 源可替换：国内构建慢/卡住时用 --build-arg PIP_INDEX_URL=镜像地址
+# 例：https://pypi.tuna.tsinghua.edu.cn/simple
+ARG PIP_INDEX_URL=https://pypi.org/simple
+
+COPY backend/requirements.txt ./requirements.txt
+RUN grep -v "^scikit-survival" requirements.txt > /tmp/req.txt \
+    && pip install --no-cache-dir -i "$PIP_INDEX_URL" -r /tmp/req.txt \
+    && pip install --no-cache-dir -i "$PIP_INDEX_URL" --no-deps scikit-survival==0.27.0
+
+COPY backend/ ./
+
+# 示例数据集：程序按 <backend 同级>/sample_data 解析（容器内即 /sample_data）
+COPY sample_data/ /sample_data/
+
+EXPOSE 8002
+CMD ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8002"]

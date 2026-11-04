@@ -1,0 +1,41 @@
+# 医疗数据分析平台 - Docker Compose 一键编排
+# 用法（Docker Desktop 就绪后）：
+#   docker compose up --build        # 首次构建并启动
+#   docker compose up                # 之后直接启动
+#   docker compose down              # 停止
+#
+# 前端 http://127.0.0.1:3001  后端 http://127.0.0.1:8002
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args:
+        # 国内网络可覆盖：PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple docker compose up --build
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
+    image: medical-data-analysis-backend:latest
+    container_name: medical-backend
+    ports:
+      - "8002:8002"
+    environment:
+      # API 访问令牌：非空时所有 /api/* 接口（/api/health 除外）要求 X-API-Token 头。
+      # 端口若映射到非本机地址（如云服务器），必须设置：API_TOKEN=$(openssl rand -hex 24)
+      API_TOKEN: ${API_TOKEN:-}
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: medical-data-analysis-frontend:latest
+    container_name: medical-frontend
+    ports:
+      - "3001:3001"
+    environment:
+      # 这个地址会被注入到浏览器端 JS（window.APP_CONFIG.apiBase），
+      # 必须填"浏览器能访问到的地址"。本地 Docker 用宿主机映射端口 127.0.0.1:8002，
+      # 不能填容器服务名 backend:8002（浏览器解析不了 Docker 内部 DNS）。
+      BACKEND_ORIGIN: ${BACKEND_ORIGIN:-http://127.0.0.1:8002}
+    depends_on:
+      - backend
+    restart: unless-stopped
